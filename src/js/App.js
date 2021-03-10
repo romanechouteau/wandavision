@@ -1,4 +1,10 @@
 import { Scene, sRGBEncoding, WebGLRenderer } from 'three'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js'
+import { TechnicolorShader } from 'three/examples/jsm/shaders/TechnicolorShader.js'
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import * as dat from 'dat.gui'
 
 import Sizes from '@tools/Sizes'
@@ -40,6 +46,7 @@ export default class App {
     // Set renderer pixel ratio & sizes
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
+    this.composer = new EffectComposer(this.renderer)
     // Resize renderer on resize event
     this.sizes.on('resize', () => {
       this.renderer.setSize(
@@ -50,10 +57,11 @@ export default class App {
     // Set RequestAnimationFrame with 60fps
     this.time.on('tick', () => {
       // When tab is not visible (tab is not active or window is minimized), browser stops requesting animation frames. Thus, this does not work
-      // if the window is only in the background without focus (for example, if you select another window without minimizing the browser one), 
+      // if the window is only in the background without focus (for example, if you select another window without minimizing the browser one),
       // which might cause some performance or batteries issues when testing on multiple browsers
-      if (!(this.renderOnBlur?.activated && !document.hasFocus() ) ) {
+      if (!(this.renderOnBlur?.activated && !document.hasFocus())) {
         this.renderer.render(this.scene, this.camera.camera)
+        this.composer.render()
       }
     })
 
@@ -61,9 +69,7 @@ export default class App {
       this.renderOnBlur = { activated: true }
       const folder = this.debug.addFolder('Renderer')
       folder.open()
-      folder
-        .add(this.renderOnBlur, 'activated')
-        .name('Render on window blur')
+      folder.add(this.renderOnBlur, 'activated').name('Render on window blur')
     }
   }
   setCamera() {
@@ -73,15 +79,18 @@ export default class App {
       renderer: this.renderer,
       debug: this.debug,
     })
+    this.setPostProcessing()
     // Add camera to scene
     this.scene.add(this.camera.container)
   }
   setWorld() {
     // Create world instance
     this.world = new World({
+      resolution: [this.sizes.viewport.width, this.sizes.viewport.height],
       time: this.time,
       debug: this.debug,
       assets: this.assets,
+      camera: this.camera,
     })
     // Add world to scene
     this.scene.add(this.world.container)
@@ -90,5 +99,18 @@ export default class App {
     if (window.location.hash === '#debug') {
       this.debug = new dat.GUI({ width: 450 })
     }
+  }
+  setPostProcessing() {
+    const renderPass = new RenderPass(this.scene, this.camera.camera)
+    this.composer.addPass(renderPass)
+
+    // const effectFilm = new FilmPass(0.35, 0.025, 648, false)
+    // this.composer.addPass(effectFilm)
+
+    // const glitchPass = new GlitchPass()
+    // this.composer.addPass(glitchPass)
+
+    // const technicolor = new ShaderPass(TechnicolorShader)
+    // this.composer.addPass(technicolor)
   }
 }

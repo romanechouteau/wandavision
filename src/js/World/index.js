@@ -1,8 +1,11 @@
-import { AxesHelper, Object3D } from 'three'
+import { AxesHelper, Object3D, Vector3 } from 'three'
+import { map } from 'lodash'
 
 import AmbientLightSource from './AmbientLight'
 import PointLightSource from './PointLight'
-import Suzanne from './Suzanne'
+import Hex from './Hex'
+import Floor from './Floor'
+import Episode from './Episode'
 
 export default class World {
   constructor(options) {
@@ -10,6 +13,8 @@ export default class World {
     this.time = options.time
     this.debug = options.debug
     this.assets = options.assets
+    this.resolution = options.resolution
+    this.camera = options.camera
 
     // Set up
     this.container = new Object3D()
@@ -26,7 +31,9 @@ export default class World {
   init() {
     this.setAmbientLight()
     this.setPointLight()
-    this.setSuzanne()
+    this.setHex()
+    this.setFloor()
+    this.setEpisodes()
   }
   setLoader() {
     this.loadDiv = document.querySelector('.loadScreen')
@@ -67,11 +74,63 @@ export default class World {
     })
     this.container.add(this.light.container)
   }
-  setSuzanne() {
-    this.suzanne = new Suzanne({
+  setHex() {
+    this.hex = new Hex({
       time: this.time,
-      assets: this.assets,
+      color: new Vector3(0, 0.7, 1),
+      opposite: new Vector3(1, 0, 0),
+      camera: this.camera,
     })
-    this.container.add(this.suzanne.container)
+    this.container.add(this.hex.container)
+  }
+  setFloor() {
+    this.floor = new Floor({
+      time: this.time,
+    })
+    this.container.add(this.floor.container)
+  }
+  setEpisodes() {
+    const EPISODES = [
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+      {
+        name: 'Hello',
+      },
+    ]
+    this.episodes = map(
+      EPISODES,
+      (episode, id) =>
+        new Episode({
+          time: this.time,
+          id,
+          total: EPISODES.length,
+          radius: 15,
+          assets: this.assets,
+          offset: Math.random() * EPISODES.length,
+        })
+    )
+    this.container.add(...map(this.episodes, (episode) => episode.container))
   }
 }
