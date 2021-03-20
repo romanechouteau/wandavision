@@ -6,6 +6,9 @@ uniform vec3 opposite;
 
 varying vec2 vUv;
 
+#include <common>
+#include <fog_pars_fragment>
+
 //
 // GLSL textureless classic 3D noise "cnoise",
 // with an RSL-style periodic variant "pnoise".
@@ -184,22 +187,31 @@ float pnoise(vec3 P, vec3 rep)
   return 2.2 * n_xyz;
 }
 
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))*
+        43758.5453123);
+}
+
 
 void main() {
-  float noise = cnoise(vec3(vUv.x * 50. + time, vUv.y * 500. + time, time));
-  float noiseRG = cnoise(vec3(mod(vUv.x * 1000., 3.) + sin(time) * 10., mod(vUv.y * 1000., 3.) * 500. + sin(time) * 100., 1.));
+  float noiseAlpha = cnoise(vec3(vUv.x * 50. + time, vUv.y * 500. + time, time));
+  float stepAlpha = smoothstep(0.2, 1., noiseAlpha);
+  float alpha = mix(0.4, 0.8, stepAlpha);
 
-  float stepAlpha = smoothstep(0.2, 1., noise);
-  float alpha = mix(0.8, 1., stepAlpha);
-  vec3 finalColor = color;
+  float noiseRG = cnoise(vec3(vUv.x * 10000. + sin(time) * 10., vUv.y  * 10000. + sin(time) * 10., 1.));
 
   vec3 green = vec3(0., 1., 0.);
-  float stepRG = smoothstep(0., 0.8, noiseRG);
-  if (floor(mod(vUv.x * 10000., 2.)) == 0. && floor(mod(vUv.y * 10000., 2.)) == 0.) {
-    finalColor = mix(color, opposite, stepRG);
-  } else {
-    finalColor = mix(color, green, stepRG);
-  }
+  vec3 red = vec3(1., 0., 0.);
+  float stepRG = step(0.5, noiseRG);
+  vec3 pixelRG = mix(red, green, stepRG);
+  vec3 pixelColor = mix(red, green, stepRG);
 
-  gl_FragColor = vec4(finalColor, alpha);
+  float stepPixel = step(0.4, noiseRG);
+  vec3 finalColor = mix(color, pixelColor, stepPixel);
+  float finalAlpha = mix(alpha, 0.6, stepPixel);
+
+  gl_FragColor = vec4(finalColor, finalAlpha);
+
+  #include <fog_fragment>
 }

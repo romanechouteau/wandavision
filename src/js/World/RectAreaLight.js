@@ -1,38 +1,38 @@
-import { Object3D, PointLight, Color } from 'three'
+import { Object3D, Color, RectAreaLight } from 'three'
 
-export default class PointLightSource {
+export default class RectAreaLightSource {
   constructor(options) {
-    // Set options
     this.debug = options.debug
 
-    // Set up
     this.container = new Object3D()
-    this.container.name = 'Point Light'
+    this.container.name = 'RectArea Light'
     this.params = {
-      color: 0xffffff,
+      color: 0x0099ff,
       positionX: 0,
-      positionY: 2,
-      positionZ: 5,
+      positionY: 0,
+      positionZ: 0,
     }
 
-    this.createPointLight()
+    this.createRectAreaLight()
 
     if (this.debug) {
       this.setDebug()
     }
   }
-  createPointLight() {
-    this.light = new PointLight(this.params.color)
+
+  createRectAreaLight() {
+    this.light = new RectAreaLight(this.params.color, 0.9, 70, 8)
     this.light.castShadow = true
     this.light.position.set(
       this.params.positionX,
       this.params.positionY,
       this.params.positionZ
     )
+    this.light.lookAt(-15, 4, 0)
     this.container.add(this.light)
   }
+
   setDebug() {
-    // Color debug
     this.debugFolder = this.debug.addFolder('Point Light')
     this.debugFolder.open()
     this.debugFolder
@@ -41,7 +41,6 @@ export default class PointLightSource {
       .onChange(() => {
         this.light.color = new Color(this.params.color)
       })
-    //Position debug
     this.debugFolder
       .add(this.light.position, 'x')
       .step(0.1)

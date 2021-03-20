@@ -2,21 +2,20 @@ import { AxesHelper, Object3D, Vector3 } from 'three'
 import { map } from 'lodash'
 
 import AmbientLightSource from './AmbientLight'
-import PointLightSource from './PointLight'
+import RectAreaLightSource from './RectAreaLight'
 import Hex from './Hex'
 import Floor from './Floor'
 import Episode from './Episode'
 
 export default class World {
   constructor(options) {
-    // Set options
     this.time = options.time
     this.debug = options.debug
     this.assets = options.assets
     this.resolution = options.resolution
     this.camera = options.camera
+    this.BLOOM_SCENE = options.BLOOM_SCENE
 
-    // Set up
     this.container = new Object3D()
     this.container.name = 'World'
 
@@ -28,13 +27,7 @@ export default class World {
 
     this.setLoader()
   }
-  init() {
-    this.setAmbientLight()
-    this.setPointLight()
-    this.setHex()
-    this.setFloor()
-    this.setEpisodes()
-  }
+
   setLoader() {
     this.loadDiv = document.querySelector('.loadScreen')
     this.loadModels = this.loadDiv.querySelector('.load')
@@ -62,33 +55,49 @@ export default class World {
       })
     }
   }
+
+  init() {
+    this.setAmbientLight()
+    this.setRectAreaLight()
+    this.setHex()
+    this.setFloor()
+    this.setTick()
+    // this.setEpisodes()
+  }
+
   setAmbientLight() {
     this.ambientlight = new AmbientLightSource({
       debug: this.debugFolder,
     })
     this.container.add(this.ambientlight.container)
   }
-  setPointLight() {
-    this.light = new PointLightSource({
+
+  setRectAreaLight() {
+    this.light = new RectAreaLightSource({
       debug: this.debugFolder,
     })
     this.container.add(this.light.container)
   }
+
   setHex() {
     this.hex = new Hex({
       time: this.time,
-      color: new Vector3(0, 0.7, 1),
+      color: new Vector3(0, 0.6, 1),
       opposite: new Vector3(1, 0, 0),
       camera: this.camera,
+      BLOOM_SCENE: this.BLOOM_SCENE,
     })
     this.container.add(this.hex.container)
   }
+
   setFloor() {
     this.floor = new Floor({
       time: this.time,
+      assets: this.assets,
     })
     this.container.add(this.floor.container)
   }
+
   setEpisodes() {
     const EPISODES = [
       {
@@ -126,11 +135,24 @@ export default class World {
           time: this.time,
           id,
           total: EPISODES.length,
-          radius: 15,
+          radius: 30,
           assets: this.assets,
           offset: Math.random() * EPISODES.length,
         })
     )
     this.container.add(...map(this.episodes, (episode) => episode.container))
+  }
+
+  setTick() {
+    this.time.on('tick', () => {
+      const cameraX = this.camera.camera.position.x
+      if (
+        this.container.children.includes(this.hex.container) &&
+        cameraX <= -2.2 &&
+        cameraX >= -2.3
+      ) {
+        this.container.remove(this.hex.container)
+      }
+    })
   }
 }

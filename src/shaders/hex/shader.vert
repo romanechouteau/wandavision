@@ -1,8 +1,16 @@
 precision highp float;
 
+uniform float time;
+
 varying vec2 vUv;
+
+#include <common>
+#include <fog_pars_vertex>
 
 void main() {
    vUv = uv;
-   gl_Position = projectionMatrix * modelViewMatrix * vec4( position.xyz, 1.0 );
+   #include <begin_vertex>
+   #include <project_vertex>
+
+   #include <fog_vertex>
 }
